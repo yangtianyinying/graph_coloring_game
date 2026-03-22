@@ -58,6 +58,7 @@
       <div class="editor-body">
         <aside class="editor-sidebar">
           <h2>Block / Trial</h2>
+          <p class="hint block-tree-hint">拖拽 Trial 可调整顺序，或拖到其他 Block（标题区、条目间、底部「追加」区均可放置）。</p>
           <div id="block-trial-tree"></div>
           <h2>当前 Trial</h2>
           <label>graphId <input type="text" id="trial-graph-id" /></label>
@@ -67,6 +68,7 @@
               <option value="free">自由顺序 free</option>
             </select>
           </label>
+          <p class="hint">每幅图节点 ID 从 <strong>A</strong> 起、按 Trial 独立编号；每次<strong>应用初始信念</strong>后会按节点列表顺序重排为 A、B、C…。主实验：<strong>sequential</strong> 显示 A/B…；<strong>free</strong> 不显示字母，已报告节点上显示 <strong>1、2、3…</strong>（填色顺序）。</p>
           <p class="hint">已着色节点由下方选择节点 + 三角盘设定；被试仅报告未着色节点。</p>
           <h3>初始信念</h3>
           <label class="editor-belief-select-label">选择节点
@@ -74,7 +76,17 @@
               <option value="">— 请选择 —</option>
             </select>
           </label>
-          <p class="hint editor-belief-hint">先选节点，再调右侧三角盘，最后点「应用信念」。可点列表中「载入」重新编辑该节点。</p>
+          <p class="hint editor-belief-hint">先选节点，用右侧三角盘或下方数值 / 一行公式设定，再点「应用信念」。可点列表中「载入」重新编辑该节点。</p>
+          <div class="editor-rgb-row">
+            <label>R <input type="number" id="editor-belief-r" step="any" min="0" max="1" /></label>
+            <label>G <input type="number" id="editor-belief-g" step="any" min="0" max="1" /></label>
+            <label>B <input type="number" id="editor-belief-b" step="any" min="0" max="1" /></label>
+          </div>
+          <p class="hint">一行解析（自动归一化为概率单纯形）：例如 <code>R=0.33 G=0.33 B=0.34</code> 或 <code>r=0.2 g=0.3 b=0.5</code></p>
+          <div class="editor-rgb-line-row">
+            <input type="text" id="editor-belief-rgb-line" class="editor-belief-rgb-line" placeholder="R=0.33 G=0.33 B=0.34" />
+            <button type="button" id="btn-parse-rgb-line">解析到数值与三角盘</button>
+          </div>
           <div class="editor-belief-actions">
             <button type="button" id="btn-apply-belief" class="btn-primary-soft">应用信念到选中节点</button>
           </div>
@@ -94,7 +106,7 @@
         </aside>
         <div class="editor-canvas-wrap">
           <canvas id="editor-canvas" width="960" height="620"></canvas>
-          <div class="editor-canvas-hint">拖拽节点调整位置；「连边」模式：依次点击两个节点连边；也可在左侧用邻接矩阵批量设置。</div>
+          <div class="editor-canvas-hint">拖拽节点调整位置；此处画布始终显示节点字母。连边：依次点两节点，或用左侧邻接矩阵。</div>
         </div>
         <aside class="editor-picker-panel">
           <h3>三角盘（对左侧选中节点调信念）</h3>

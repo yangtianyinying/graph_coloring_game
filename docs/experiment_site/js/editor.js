@@ -17,7 +17,67 @@
   let edgeMode = false;
   let pendingEdgeNode = null;
   let dragState = null;
-  let nextNodeId = 1;
+
+  /** 当前 Trial 内独立编号：优先使用 A–Z 中尚未占用的字母，超过 26 个则用 N2、N3… 避免与单字母冲突 */
+  function allocNextLetterId(trial) {
+    const used = new Set((trial.nodes || []).map((n) => n.id));
+    for (let i = 0; i < 26; i++) {
+      const id = String.fromCharCode(65 + i);
+      if (!used.has(id)) return id;
+    }
+    let k = 2;
+    for (;;) {
+      const id = `N${k}`;
+      if (!used.has(id)) return id;
+      k++;
+    }
+  }
+
+  /** 与 alloc 一致：第 i 个节点（从 0 起）对应的字母 id */
+  function sequentialLetterIds(count) {
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      if (i < 26) out.push(String.fromCharCode(65 + i));
+      else out.push(`N${i - 26 + 2}`);
+    }
+    return out;
+  }
+
+  /**
+   * 按 trial.nodes 顺序将节点 id 规范为 A、B、C…，并同步 edges / initialBeliefs / reportOrder。
+   * 在「应用初始信念」后调用，使每幅图编号从 A 起连续。
+   * @returns {Object<string,string>} oldId -> newId
+   */
+  function renumberTrialNodesToLetters(trial) {
+    const nodes = trial.nodes;
+    if (!nodes.length) return {};
+    const oldIds = nodes.map((n) => n.id);
+    const newIds = sequentialLetterIds(oldIds.length);
+    const map = {};
+    for (let i = 0; i < oldIds.length; i++) map[oldIds[i]] = newIds[i];
+    let changed = false;
+    for (let i = 0; i < oldIds.length; i++) {
+      if (oldIds[i] !== newIds[i]) {
+        changed = true;
+        break;
+      }
+    }
+    if (!changed) return map;
+    for (const n of nodes) {
+      n.id = map[n.id];
+      n.label = n.id;
+    }
+    trial.edges = (trial.edges || []).map(([u, v]) => [map[u], map[v]]);
+    const ib = trial.initialBeliefs || {};
+    const nb = {};
+    for (const [k, v] of Object.entries(ib)) {
+      const nk = map[k];
+      if (nk != null) nb[nk] = v;
+    }
+    trial.initialBeliefs = nb;
+    trial.reportOrder = (trial.reportOrder || []).map((rid) => map[rid]).filter((x) => x != null);
+    return map;
+  }
 
   function createEmptyTrial() {
     return {
@@ -129,7 +189,7 @@
       : "（请先添加节点再填矩阵）";
   }
 
-  function syncBeliefNodeSelect() {
+  function syncBeliefNodeSelect(preferredId) {
     const trial = getCurrentTrial();
     const sel = document.getElementById("editor-belief-node");
     if (!sel) return;
@@ -142,7 +202,13 @@
       opt.textContent = id;
       sel.appendChild(opt);
     }
-    sel.value = ids.includes(prev) ? prev : ids[0] || "";
+    const pick =
+      preferredId != null && preferredId !== "" && ids.includes(preferredId)
+        ? preferredId
+        : ids.includes(prev)
+          ? prev
+          : ids[0] || "";
+    sel.value = pick;
   }
 
   function loadPickerFromBeliefSelect() {
@@ -167,45 +233,212 @@
     ta.value = edgesToMatrixLines(ids, trial.edges);
   }
 
+  function normalizeRGB(r, g, b) {
+    const s = Math.max(r + g + b, 1e-9);
+    return [r / s, g / s, b / s];
+  }
+
+  /** 解析一行如 R=0.33 G=0.33 B=0.34（大小写不敏感，可含空格） */
+  function parseRgbLine(text) {
+    const tr = text.trim();
+    if (!tr) return null;
+    const num = "([-+]?[0-9]*\\.?[0-9]+(?:e[-+]?[0-9]+)?)";
+    const rM = new RegExp(`R\\s*=\\s*${num}`, "i").exec(tr);
+    const gM = new RegExp(`G\\s*=\\s*${num}`, "i").exec(tr);
+    const bM = new RegExp(`B\\s*=\\s*${num}`, "i").exec(tr);
+    if (rM && gM && bM) {
+      return normalizeRGB(parseFloat(rM[1]), parseFloat(gM[1]), parseFloat(bM[1]));
+    }
+    return null;
+  }
+
+  function syncRgbInputsFromPicker() {
+    const picker = global._editorPicker;
+    if (!picker) return;
+    const [r, g, b] = picker.getBelief();
+    const set = (id, v) => {
+      const inp = document.getElementById(id);
+      if (inp) inp.value = String(Number(v.toFixed(6)));
+    };
+    set("editor-belief-r", r);
+    set("editor-belief-g", g);
+    set("editor-belief-b", b);
+  }
+
+  function syncBeliefRgbLineFromPicker() {
+    const line = document.getElementById("editor-belief-rgb-line");
+    if (!line || !global._editorPicker) return;
+    const [r, g, b] = global._editorPicker.getBelief();
+    line.value = `R=${r.toFixed(4)} G=${g.toFixed(4)} B=${b.toFixed(4)}`;
+  }
+
+  function applyRgbInputsToPicker() {
+    if (!global._editorPicker) return;
+    const r = parseFloat(document.getElementById("editor-belief-r").value);
+    const g = parseFloat(document.getElementById("editor-belief-g").value);
+    const b = parseFloat(document.getElementById("editor-belief-b").value);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return;
+    const [nr, ng, nb] = normalizeRGB(r, g, b);
+    global._editorPicker.setBelief(nr, ng, nb);
+    drawEditorPicker();
+  }
+
+  function clearBlockTreeDragOver() {
+    document.querySelectorAll(".block-tree-drag-over").forEach((n) => n.classList.remove("block-tree-drag-over"));
+  }
+
+  /**
+   * 将 Trial 从 (fromBi,fromTi) 移到 toBi 的 insertTi（插入到该下标之前；末尾用 length）。
+   */
+  function moveTrial(fromBi, fromTi, toBi, insertTi) {
+    ensureIds();
+    const blocks = stimulus.blocks;
+    if (fromBi < 0 || fromBi >= blocks.length) return;
+    if (toBi < 0 || toBi >= blocks.length) return;
+    const fromBlock = blocks[fromBi];
+    if (fromTi < 0 || fromTi >= fromBlock.trials.length) return;
+    const viewTrial = getCurrentTrial();
+    const [trial] = fromBlock.trials.splice(fromTi, 1);
+    if (fromBi === toBi && fromTi < insertTi) insertTi--;
+    blocks[toBi].trials.splice(insertTi, 0, trial);
+    stimulus.blocks.forEach((b, bi) => {
+      b.trials.forEach((tr, ti) => {
+        if (tr === viewTrial) {
+          currentBlockIdx = bi;
+          currentTrialIdx = ti;
+        }
+      });
+    });
+    loadTrialToForm();
+    renderTree();
+  }
+
+  function readDragPayload(e) {
+    try {
+      const raw = e.dataTransfer.getData("application/json");
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    const plain = e.dataTransfer.getData("text/plain");
+    if (plain) {
+      const [a, b] = plain.split(",").map((x) => parseInt(x, 10));
+      if (!Number.isNaN(a) && !Number.isNaN(b)) return { fromBi: a, fromTi: b };
+    }
+    return null;
+  }
+
   function renderTree() {
     const el = document.getElementById("block-trial-tree");
     if (!el) return;
     el.innerHTML = "";
     stimulus.blocks.forEach((block, bi) => {
-      const div = document.createElement("div");
-      div.className = "block-item";
+      const blockWrap = document.createElement("div");
+      blockWrap.className = "block-tree-block";
+      blockWrap.dataset.bi = String(bi);
+
       const head = document.createElement("div");
-      head.innerHTML = `<strong>Block ${bi + 1}</strong> <span>(${block.blockId})</span>`;
-      div.appendChild(head);
-      block.trials.forEach((trial, ti) => {
+      head.className = "block-tree-head block-tree-drop-target";
+      head.textContent = `Block ${bi + 1} (${block.blockId}) — 拖至标题可置顶`;
+      head.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      });
+      head.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const p = readDragPayload(e);
+        if (!p) return;
+        if (p.fromBi === bi && p.fromTi === 0) return;
+        moveTrial(p.fromBi, p.fromTi, bi, 0);
+      });
+
+      const trialsWrap = document.createElement("div");
+      trialsWrap.className = "block-tree-trials";
+
+      block.trials.forEach((trialObj, ti) => {
         const t = document.createElement("div");
-        t.className = "trial-item" + (bi === currentBlockIdx && ti === currentTrialIdx ? " current" : "");
-        t.textContent = `Trial ${ti + 1}: ${trial.graphId}`;
+        t.className =
+          "trial-item" + (bi === currentBlockIdx && ti === currentTrialIdx ? " current" : "");
+        t.draggable = true;
+        t.textContent = `Trial ${ti + 1}: ${trialObj.graphId}`;
+        t.dataset.bi = String(bi);
+        t.dataset.ti = String(ti);
+        t.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("application/json", JSON.stringify({ fromBi: bi, fromTi: ti }));
+          e.dataTransfer.setData("text/plain", `${bi},${ti}`);
+          e.dataTransfer.effectAllowed = "move";
+        });
+        t.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+        });
+        t.addEventListener("drop", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const p = readDragPayload(e);
+          if (!p) return;
+          if (p.fromBi === bi && p.fromTi === ti) return;
+          moveTrial(p.fromBi, p.fromTi, bi, ti);
+        });
         t.addEventListener("click", () => {
           currentBlockIdx = bi;
           currentTrialIdx = ti;
           loadTrialToForm();
           renderTree();
         });
-        div.appendChild(t);
+        trialsWrap.appendChild(t);
       });
-      el.appendChild(div);
-    });
-  }
 
-  function syncNextNodeIdFromTrial(trial) {
-    let max = 0;
-    for (const n of trial.nodes || []) {
-      const m = /^n(\d+)$/.exec(n.id);
-      if (m) max = Math.max(max, parseInt(m[1], 10));
-    }
-    nextNodeId = Math.max(nextNodeId, max + 1);
+      const dropEnd = document.createElement("div");
+      dropEnd.className = "block-tree-drop-end";
+      dropEnd.textContent = "拖至此处 → 追加到本 Block 末尾";
+      dropEnd.dataset.bi = String(bi);
+      dropEnd.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        dropEnd.classList.add("block-tree-drag-over");
+      });
+      dropEnd.addEventListener("dragleave", (e) => {
+        if (!dropEnd.contains(e.relatedTarget)) dropEnd.classList.remove("block-tree-drag-over");
+      });
+      dropEnd.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropEnd.classList.remove("block-tree-drag-over");
+        const p = readDragPayload(e);
+        if (!p) return;
+        const insertTi = stimulus.blocks[bi].trials.length;
+        if (p.fromBi === bi && p.fromTi === insertTi - 1) return;
+        moveTrial(p.fromBi, p.fromTi, bi, insertTi);
+      });
+
+      blockWrap.addEventListener("dragover", (e) => {
+        if (e.target.closest(".trial-item") || e.target.closest(".block-tree-drop-end")) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        blockWrap.classList.add("block-tree-drag-over");
+      });
+      blockWrap.addEventListener("dragleave", (e) => {
+        if (!blockWrap.contains(e.relatedTarget)) blockWrap.classList.remove("block-tree-drag-over");
+      });
+      blockWrap.addEventListener("drop", (e) => {
+        if (e.target.closest(".trial-item") || e.target.closest(".block-tree-drop-end")) return;
+        e.preventDefault();
+        blockWrap.classList.remove("block-tree-drag-over");
+        const p = readDragPayload(e);
+        if (!p) return;
+        moveTrial(p.fromBi, p.fromTi, bi, stimulus.blocks[bi].trials.length);
+      });
+
+      blockWrap.appendChild(head);
+      blockWrap.appendChild(trialsWrap);
+      blockWrap.appendChild(dropEnd);
+      el.appendChild(blockWrap);
+    });
   }
 
   function loadTrialToForm() {
     ensureIds();
     const trial = getCurrentTrial();
-    syncNextNodeIdFromTrial(trial);
     document.getElementById("trial-graph-id").value = trial.graphId || "";
     document.getElementById("trial-order-mode").value = trial.orderMode || "sequential";
     document.getElementById("editor-stimulus-name").value = stimulus.name || "";
@@ -354,12 +587,14 @@
       const [r, g, b] = picker.getBelief();
       el.textContent = `R=${r.toFixed(4)}  G=${g.toFixed(4)}  B=${b.toFixed(4)}`;
     }
+    syncRgbInputsFromPicker();
+    syncBeliefRgbLineFromPicker();
   }
 
   function addNodeAt(x, y) {
     ensureIds();
     const trial = getCurrentTrial();
-    const id = `n${nextNodeId++}`;
+    const id = allocNextLetterId(trial);
     trial.nodes.push({ id, x, y, label: id });
     syncReportOrderFromUncolored(trial);
     syncBeliefNodeSelect();
@@ -551,6 +786,24 @@
       renderTree();
     });
 
+    document.addEventListener("dragend", clearBlockTreeDragOver);
+
+    ["editor-belief-r", "editor-belief-g", "editor-belief-b"].forEach((rid) => {
+      const inp = document.getElementById(rid);
+      if (inp) inp.addEventListener("input", applyRgbInputsToPicker);
+    });
+
+    document.getElementById("btn-parse-rgb-line").addEventListener("click", () => {
+      const lineEl = document.getElementById("editor-belief-rgb-line");
+      const parsed = parseRgbLine(lineEl && lineEl.value);
+      if (!parsed) {
+        alert("无法解析。请使用一行：R=0.33 G=0.33 B=0.34（字母与数字之间可有空格，大小写不敏感）");
+        return;
+      }
+      global._editorPicker.setBelief(parsed[0], parsed[1], parsed[2]);
+      drawEditorPicker();
+    });
+
     document.getElementById("editor-belief-node").addEventListener("change", () => {
       loadPickerFromBeliefSelect();
     });
@@ -570,8 +823,14 @@
       }
       if (!trial.initialBeliefs) trial.initialBeliefs = {};
       const [r, g, b] = global._editorPicker.getBelief();
-      trial.initialBeliefs[id] = [r, g, b];
+      const chosenId = id;
+      trial.initialBeliefs[chosenId] = [r, g, b];
+      const idMap = renumberTrialNodesToLetters(trial);
+      const newChosen = idMap[chosenId] != null ? idMap[chosenId] : chosenId;
       syncReportOrderFromUncolored(trial);
+      syncBeliefNodeSelect(newChosen);
+      syncAdjMatrixTextareaFromEdges();
+      updateNodeOrderHint();
       renderColoredPanel();
       renderReportOrder();
       drawEditorCanvas();
@@ -630,17 +889,9 @@
   function validateAndLoadStimulus(data) {
     if (!data || data.version !== 1) throw new Error("需要 version: 1");
     if (!Array.isArray(data.blocks)) throw new Error("缺少 blocks");
-    let maxN = 0;
     for (const block of data.blocks) {
       if (!Array.isArray(block.trials)) throw new Error("block 缺少 trials");
-      for (const trial of block.trials) {
-        for (const n of trial.nodes || []) {
-          const m = /^n(\d+)$/.exec(n.id);
-          if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
-        }
-      }
     }
-    nextNodeId = maxN + 1;
     stimulus = data;
     currentBlockIdx = 0;
     currentTrialIdx = 0;
