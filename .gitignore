@@ -1,4 +1,4 @@
-# Python
+# Python（若以后加脚本）
 __pycache__/
 *.py[cod]
 *$py.class
@@ -15,17 +15,10 @@ wheels/
 venv/
 ENV/
 
-# Django：本地数据库与密钥（上传 Git / 部署 Pages 都不需要）
-db.sqlite3
-db.sqlite3-journal
-*.log
-local_settings.py
+# Local env files
 .env
 .env.*
 !.env.example
-
-# 若使用 collectstatic 生成的目录（按需取消注释）
-# staticfiles/
 
 # Node（若以后加前端构建）
 node_modules/
@@ -40,6 +33,3 @@ node_modules/
 .DS_Store
 Thumbs.db
 Desktop.ini
-
-# 说明：.gitignore 只影响「git 不跟踪哪些文件」；GitHub Pages 发布的是分支上的已提交内容，
-# 与静态导出相关的目录可自建 docs/ 或 gh-pages 分支单独维护。
