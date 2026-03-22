@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>图着色推断实验</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://esm.sh/jspsych@7.3.4/css/jspsych.css" />
   <link rel="stylesheet" href="experiment_site/css/app.css" />
   <script type="importmap">
@@ -17,18 +20,26 @@
   }
   </script>
 </head>
-<body>
+<body class="app-shell">
   <header class="app-header">
-    <h1>图着色推断实验</h1>
-    <nav class="tabs">
+    <div class="app-header-inner">
+      <div class="app-brand">
+        <span class="app-brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>图着色推断实验</h1>
+          <p class="app-tagline">刺激集编辑 · jsPsych 主试运行</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="主功能区">
       <button type="button" id="tab-editor" data-panel="panel-editor">刺激集生成</button>
       <button type="button" id="tab-run" data-panel="panel-run">主实验区</button>
-    </nav>
+      </nav>
+    </div>
   </header>
 
-  <main>
+  <main class="app-main">
     <section id="panel-editor" class="panel active">
-      <div class="editor-toolbar">
+      <div class="editor-toolbar card-toolbar">
         <label>刺激集名称 <input type="text" id="editor-stimulus-name" placeholder="my-stimulus-set" /></label>
         <label>画布宽 <input type="number" id="editor-canvas-w" min="400" max="2000" value="960" /></label>
         <label>画布高 <input type="number" id="editor-canvas-h" min="300" max="1400" value="620" /></label>
@@ -75,8 +86,8 @@
       </div>
     </section>
 
-    <section id="panel-run" class="panel">
-      <div class="run-toolbar">
+    <section id="panel-run" class="panel panel-run">
+      <div class="run-toolbar card-toolbar">
         <label>被试编号 <input type="text" id="run-participant" placeholder="P001" /></label>
         <input type="file" id="run-stimulus-file" accept="application/json,.json" />
         <button type="button" id="btn-start-exp">开始实验（jsPsych）</button>

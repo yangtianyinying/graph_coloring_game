@@ -3,7 +3,7 @@
  */
 (function (global) {
   const THEME = {
-    background: [250, 250, 250],
+    background: [255, 255, 255],
     red: [220, 70, 70],
     green: [70, 170, 90],
     blue: [70, 110, 230],
