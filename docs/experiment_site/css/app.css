@@ -758,6 +758,28 @@ button[type="button"] {
   background: var(--surface-muted);
 }
 
+.node-scale-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.node-scale-label input[type="range"] {
+  width: 7rem;
+  vertical-align: middle;
+}
+
+.node-scale-label span[id$="-scale-val"] {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  min-width: 2.5rem;
+  color: var(--text-hint);
+}
+
 /* —— 实验区 —— */
 .panel-run .run-toolbar {
   margin-bottom: 1.25rem;

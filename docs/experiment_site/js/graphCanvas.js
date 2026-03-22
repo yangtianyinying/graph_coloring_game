@@ -3,6 +3,11 @@
  */
 (function (global) {
   const { THEME, rgb } = global.GraphExperimentTheme;
+  const REF_R = (global.GraphExperimentTheme.BASE_NODE && global.GraphExperimentTheme.BASE_NODE.nodeRadius) || 22;
+
+  function nodeSizeRatio() {
+    return THEME.nodeRadius / REF_R;
+  }
 
   function mixRgb(belief) {
     let [r, g, b] = belief;
@@ -54,25 +59,26 @@
     ctx.strokeStyle = rgb(THEME.black);
     ctx.lineWidth = 2;
     ctx.stroke();
+    const sr = nodeSizeRatio();
     if (isSelectable) {
       ctx.beginPath();
-      ctx.arc(x, y, outerR + 6, 0, Math.PI * 2);
+      ctx.arc(x, y, outerR + Math.max(3, Math.round(6 * sr)), 0, Math.PI * 2);
       ctx.strokeStyle = rgb(THEME.selectable);
-      ctx.lineWidth = 3;
+      ctx.lineWidth = Math.max(2, Math.round(3 * sr));
       ctx.stroke();
     }
     if (isFocus) {
       ctx.beginPath();
-      ctx.arc(x, y, outerR + 12, 0, Math.PI * 2);
+      ctx.arc(x, y, outerR + Math.max(4, Math.round(12 * sr)), 0, Math.PI * 2);
       ctx.strokeStyle = "rgb(255, 150, 0)";
-      ctx.lineWidth = 4;
+      ctx.lineWidth = Math.max(2, Math.round(4 * sr));
       ctx.stroke();
     }
   }
 
   function drawEdges(ctx, layout, edges) {
     ctx.strokeStyle = rgb(THEME.gray);
-    ctx.lineWidth = 4;
+    ctx.lineWidth = Math.max(2, Math.round(4 * nodeSizeRatio()));
     ctx.lineCap = "round";
     for (const [u, v] of edges) {
       const a = layout[u];
@@ -138,7 +144,8 @@
     ctx.lineTo(pts[2][0], pts[2][1]);
     ctx.closePath();
     ctx.strokeStyle = rgb(THEME.black);
-    ctx.lineWidth = 3;
+    ctx.lineWidth = Math.max(2, Math.round(3 * (fontPx / 14)));
+
     ctx.stroke();
 
     ctx.font = `${fontPx}px sans-serif`;
@@ -157,10 +164,11 @@
     const [r, g, b] = picker.getBelief();
     const px = r * vRed[0] + g * vGreen[0] + b * vBlue[0];
     const py = r * vRed[1] + g * vGreen[1] + b * vBlue[1];
+    const dotR = Math.max(4, Math.round(7 * (fontPx / 14)));
     ctx.beginPath();
-    ctx.arc(px, py, 7, 0, Math.PI * 2);
+    ctx.arc(px, py, dotR, 0, Math.PI * 2);
     ctx.strokeStyle = rgb(THEME.black);
-    ctx.lineWidth = 2;
+    ctx.lineWidth = Math.max(1, Math.round(2 * (fontPx / 14)));
     ctx.stroke();
   }
 
@@ -174,7 +182,8 @@
   }
 
   function nodeHitRadius() {
-    return THEME.nodeRadius + THEME.ringWidth + 14;
+    const extra = Math.max(8, Math.round(14 * nodeSizeRatio()));
+    return THEME.nodeRadius + THEME.ringWidth + extra;
   }
 
   function findNodeAt(layout, nodeIds, mx, my) {

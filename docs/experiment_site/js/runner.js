@@ -6,6 +6,7 @@ import htmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response";
 import callFunction from "@jspsych/plugin-call-function";
 
 const { THEME, rgb } = window.GraphExperimentTheme;
+const BASE_R = (window.GraphExperimentTheme.BASE_NODE && window.GraphExperimentTheme.BASE_NODE.nodeRadius) || 22;
 const {
   drawNode,
   drawEdges,
@@ -38,23 +39,30 @@ function buildContainer() {
   wrap.className = "belief-trial-wrap";
   wrap.innerHTML = `
     <div class="belief-trial-inner">
-      <canvas class="belief-graph-canvas"></canvas>
-      <div class="belief-side">
+      <div class="belief-graph-column">
+        <canvas class="belief-graph-canvas"></canvas>
         <p class="belief-message"></p>
-        <canvas class="belief-picker-canvas" width="280" height="280"></canvas>
+      </div>
+      <div class="belief-picker-column">
+        <canvas class="belief-picker-canvas" width="260" height="260"></canvas>
         <button type="button" class="belief-confirm">确认</button>
       </div>
     </div>
   `;
   const style = document.createElement("style");
   style.textContent = `
-    .belief-trial-wrap { font-family: "Segoe UI","Microsoft YaHei",sans-serif; padding: 16px; }
-    .belief-trial-inner { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
-    .belief-graph-canvas { border: 1px solid #bbb; background: ${rgb(THEME.background)}; display: block; max-width: 100%; }
-    .belief-side { min-width: 280px; }
-    .belief-message { min-height: 2.5em; font-size: 15px; }
-    .belief-picker-canvas { cursor: pointer; border: 1px solid #ccc; display: block; }
-    .belief-confirm { margin-top: 12px; padding: 10px 24px; font-size: 16px; cursor: pointer; }
+    .belief-trial-wrap { font-family: "Segoe UI","Microsoft YaHei",sans-serif; padding: 12px; }
+    .belief-trial-inner { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 20px; max-width: 100%; }
+    .belief-graph-column { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+    .belief-graph-canvas { border: 1px solid #bbb; background: ${rgb(THEME.background)}; display: block; max-width: 100%; height: auto; }
+    .belief-message { margin: 0; font-size: 15px; min-height: 2.5em; line-height: 1.45; }
+    .belief-picker-column { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .belief-picker-canvas { cursor: pointer; border: 1px solid #ccc; display: block; border-radius: 8px; }
+    .belief-confirm { padding: 10px 24px; font-size: 16px; cursor: pointer; width: 100%; max-width: 260px; box-sizing: border-box; }
+    @media (max-width: 720px) {
+      .belief-trial-inner { flex-direction: column; }
+      .belief-picker-column { width: 100%; max-width: 100%; }
+    }
   `;
   wrap.appendChild(style);
   return wrap;
@@ -122,8 +130,8 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
 
   const picker = new window.TriangleColorPicker(
     pickerCanvas.width / 2,
-    pickerCanvas.height / 2 + 10,
-    Math.min(pickerCanvas.width, pickerCanvas.height) * 0.38
+    pickerCanvas.height / 2 + 8,
+    Math.min(pickerCanvas.width, pickerCanvas.height) * 0.36
   );
   picker.setBelief(1 / 3, 1 / 3, 1 / 3);
 
@@ -152,10 +160,11 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
       const isSel = remaining.has(n.id);
       const isFoc = n.id === focused;
       drawNode(ctx, pos, b, isSel, isFoc);
+      const labelPx = Math.max(10, Math.min(18, Math.round(14 * (THEME.nodeRadius / BASE_R))));
       if (trial.orderMode === "sequential") {
         const step = seqStepByNodeId.get(n.id);
         if (step != null) {
-          ctx.font = "bold 16px sans-serif";
+          ctx.font = `bold ${labelPx}px sans-serif`;
           ctx.fillStyle = rgb(THEME.black);
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
@@ -164,7 +173,7 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
       } else if (trial.orderMode === "free") {
         const ord = freeFillOrder[n.id];
         if (ord != null) {
-          ctx.font = "bold 16px sans-serif";
+          ctx.font = `bold ${labelPx}px sans-serif`;
           ctx.fillStyle = rgb(THEME.black);
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
@@ -175,7 +184,8 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
     const pctx = pickerCanvas.getContext("2d");
     pctx.fillStyle = rgb(THEME.background);
     pctx.fillRect(0, 0, pickerCanvas.width, pickerCanvas.height);
-    drawTrianglePicker(pctx, picker, 14);
+    const triFont = Math.max(10, Math.min(18, Math.round(14 * (THEME.nodeRadius / BASE_R))));
+    drawTrianglePicker(pctx, picker, triFont);
   }
 
   function setMessage(text) {
@@ -303,6 +313,16 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
 }
 
 async function runAllTrials(stimulus, participantId) {
+  const runScaleEl = document.getElementById("run-node-scale");
+  let scale = runScaleEl && runScaleEl.value !== "" ? parseFloat(runScaleEl.value) : NaN;
+  if (Number.isNaN(scale)) {
+    scale =
+      typeof stimulus.nodeVisualScale === "number" && stimulus.nodeVisualScale > 0
+        ? stimulus.nodeVisualScale
+        : 0.88;
+  }
+  window.GraphExperimentTheme.setNodeVisualScale(scale);
+
   const allRows = [];
   let trialGlobal = 0;
   for (let bi = 0; bi < stimulus.blocks.length; bi++) {
@@ -381,6 +401,24 @@ export async function startExperimentFromUi() {
   if (!stimulus || stimulus.version !== 1) {
     alert("需要 version: 1 的刺激集");
     return;
+  }
+
+  if (typeof stimulus.nodeVisualScale === "number" && stimulus.nodeVisualScale > 0) {
+    const s = String(stimulus.nodeVisualScale);
+    const rs = document.getElementById("run-node-scale");
+    const es = document.getElementById("editor-node-scale");
+    if (rs) rs.value = s;
+    if (es) es.value = s;
+    localStorage.setItem("graphNodeVisualScale", s);
+    window.GraphExperimentTheme.setNodeVisualScale(stimulus.nodeVisualScale);
+    const pct = Math.round(stimulus.nodeVisualScale * 100);
+    const v1 = document.getElementById("editor-node-scale-val");
+    const v2 = document.getElementById("run-node-scale-val");
+    if (v1) v1.textContent = `${pct}%`;
+    if (v2) v2.textContent = `${pct}%`;
+    if (window.EditorApp && window.EditorApp.refreshEditorView) {
+      window.EditorApp.refreshEditorView();
+    }
   }
 
   const jsPsych = initJsPsych({

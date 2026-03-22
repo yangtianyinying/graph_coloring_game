@@ -560,7 +560,9 @@
       const b = beliefs[n.id] || null;
       drawNode(ctx, pos, b, true, false);
       const label = n.label != null ? String(n.label) : n.id;
-      ctx.font = "14px sans-serif";
+      const br = (global.GraphExperimentTheme.BASE_NODE && global.GraphExperimentTheme.BASE_NODE.nodeRadius) || 22;
+      const lf = Math.max(10, Math.min(18, Math.round(14 * (THEME.nodeRadius / br))));
+      ctx.font = `${lf}px sans-serif`;
       ctx.fillStyle = rgb(THEME.black);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -580,7 +582,9 @@
       global._editorPicker = new global.TriangleColorPicker(w / 2, h / 2 + 10, Math.min(w, h) * 0.38);
     }
     const picker = global._editorPicker;
-    drawTrianglePicker(ctx, picker, 14);
+    const br = (global.GraphExperimentTheme.BASE_NODE && global.GraphExperimentTheme.BASE_NODE.nodeRadius) || 22;
+    const fontPx = Math.max(10, Math.min(18, Math.round(14 * (THEME.nodeRadius / br))));
+    drawTrianglePicker(ctx, picker, fontPx);
     const el = document.getElementById("editor-rgb-readout");
     if (el) {
       const [r, g, b] = picker.getBelief();
@@ -854,6 +858,11 @@
 
     document.getElementById("btn-export").addEventListener("click", () => {
       ensureIds();
+      const sc = document.getElementById("editor-node-scale");
+      if (sc) {
+        const v = parseFloat(sc.value);
+        if (!Number.isNaN(v)) stimulus.nodeVisualScale = v;
+      }
       const text = JSON.stringify(stimulus, null, 2);
       const blob = new Blob([text], { type: "application/json" });
       const a = document.createElement("a");
@@ -874,6 +883,20 @@
         try {
           const data = JSON.parse(reader.result);
           validateAndLoadStimulus(data);
+          if (typeof data.nodeVisualScale === "number" && data.nodeVisualScale > 0) {
+            const s = String(data.nodeVisualScale);
+            const es = document.getElementById("editor-node-scale");
+            const rs = document.getElementById("run-node-scale");
+            if (es) es.value = s;
+            if (rs) rs.value = s;
+            localStorage.setItem("graphNodeVisualScale", s);
+            window.GraphExperimentTheme.setNodeVisualScale(data.nodeVisualScale);
+            const pct = Math.round(data.nodeVisualScale * 100);
+            const v1 = document.getElementById("editor-node-scale-val");
+            const v2 = document.getElementById("run-node-scale-val");
+            if (v1) v1.textContent = `${pct}%`;
+            if (v2) v2.textContent = `${pct}%`;
+          }
           loadTrialToForm();
           renderTree();
         } catch (err) {
@@ -899,5 +922,9 @@
   global.EditorApp = {
     initEditor,
     getStimulus: () => stimulus,
+    refreshEditorView: () => {
+      drawEditorCanvas();
+      drawEditorPicker();
+    },
   };
 })(typeof window !== "undefined" ? window : globalThis);
