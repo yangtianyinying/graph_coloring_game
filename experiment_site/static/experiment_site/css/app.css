@@ -1,0 +1,245 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: rgb(250, 250, 250);
+  color: rgb(25, 25, 25);
+}
+
+.app-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #ccc;
+  background: #fff;
+}
+
+.app-header h1 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tabs button {
+  padding: 8px 14px;
+  border: 1px solid #888;
+  background: #f4f4f4;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.tabs button.active {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
+
+.panel {
+  display: none;
+  padding: 16px 20px;
+}
+
+.panel.active {
+  display: block;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.editor-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.editor-toolbar input[type="number"],
+.editor-toolbar input[type="text"] {
+  width: 6rem;
+}
+
+.sep {
+  width: 1px;
+  height: 24px;
+  background: #ccc;
+  margin: 0 4px;
+}
+
+.editor-body {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .editor-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editor-sidebar h2,
+.editor-sidebar h3,
+.editor-picker-panel h3 {
+  font-size: 0.95rem;
+  margin: 12px 0 8px;
+}
+
+.editor-sidebar label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.editor-sidebar input[type="text"],
+.editor-sidebar select {
+  width: 100%;
+  margin-top: 4px;
+}
+
+#block-trial-tree {
+  font-size: 13px;
+  max-height: 200px;
+  overflow: auto;
+  border: 1px solid #ddd;
+  padding: 8px;
+  background: #fff;
+}
+
+.block-item {
+  margin-bottom: 8px;
+}
+
+.block-item strong {
+  cursor: pointer;
+}
+
+.trial-item {
+  padding: 4px 8px;
+  margin: 2px 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.trial-item:hover {
+  background: #eee;
+}
+
+.trial-item.current {
+  background: #cce5ff;
+}
+
+.editor-canvas-wrap {
+  border: 1px solid #bbb;
+  background: #fff;
+  display: inline-block;
+  max-width: 100%;
+}
+
+#editor-canvas {
+  display: block;
+  cursor: crosshair;
+  max-width: 100%;
+  height: auto;
+}
+
+.editor-canvas-hint {
+  font-size: 12px;
+  color: #666;
+  padding: 6px;
+}
+
+.editor-picker-panel {
+  border: 1px solid #ddd;
+  padding: 10px;
+  background: #fff;
+}
+
+#editor-picker-canvas {
+  display: block;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+
+.rgb-readout {
+  font-size: 13px;
+  margin-top: 8px;
+  font-family: ui-monospace, monospace;
+}
+
+.hint {
+  font-size: 12px;
+  color: #555;
+  margin: 8px 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.hint.hidden {
+  display: none;
+}
+
+.sortable-list {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  min-height: 2rem;
+  border: 1px dashed #ccc;
+  padding: 8px 8px 8px 2rem;
+  background: #fafafa;
+}
+
+.sortable-list li {
+  padding: 6px;
+  margin: 4px 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  cursor: grab;
+}
+
+.colored-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.colored-row button {
+  font-size: 12px;
+}
+
+.run-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.run-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#jspsych-target {
+  min-height: 200px;
+}
+
+.edge-mode .tabs button#btn-edge-mode {
+  outline: 2px solid #07c;
+}
