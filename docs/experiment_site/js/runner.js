@@ -69,9 +69,17 @@ function waitClick(el) {
   });
 }
 
-function waitPickNode(graphCanvas, layout, remainingSet) {
+/**
+ * 自由顺序：在画布上点未着色节点，或点「确认」。
+ * 可多次点节点切换当前编辑对象；未确认则 beliefs 不会写入，节点保持空。
+ */
+function waitPickOrConfirm(graphCanvas, btn, layout, remainingSet) {
   return new Promise((resolve) => {
-    function onDown(e) {
+    function cleanup() {
+      graphCanvas.removeEventListener("mousedown", onGraphDown);
+      btn.removeEventListener("click", onConfirm);
+    }
+    function onGraphDown(e) {
       const rect = graphCanvas.getBoundingClientRect();
       const sx = graphCanvas.width / rect.width;
       const sy = graphCanvas.height / rect.height;
@@ -79,11 +87,16 @@ function waitPickNode(graphCanvas, layout, remainingSet) {
       const my = (e.clientY - rect.top) * sy;
       const hit = findNodeAt(layout, [...remainingSet], mx, my);
       if (hit) {
-        graphCanvas.removeEventListener("mousedown", onDown);
-        resolve(hit);
+        cleanup();
+        resolve({ type: "pick", node: hit });
       }
     }
-    graphCanvas.addEventListener("mousedown", onDown);
+    function onConfirm() {
+      cleanup();
+      resolve({ type: "confirm" });
+    }
+    graphCanvas.addEventListener("mousedown", onGraphDown);
+    btn.addEventListener("click", onConfirm);
   });
 }
 
@@ -178,50 +191,81 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
         focusedNode = queue[0];
         picker.setBelief(1 / 3, 1 / 3, 1 / 3);
         setMessage(`按顺序报告节点：${focusedNode}。调节三角盘并点击确认。`);
-      } else {
-        focusedNode = null;
-        picker.setBelief(1 / 3, 1 / 3, 1 / 3);
-        setMessage("请点击一个未着色节点，然后调节三角盘并确认。");
-        redraw(null, null);
-        focusedNode = await waitPickNode(graphCanvas, layout, remaining);
-        picker.setBelief(1 / 3, 1 / 3, 1 / 3);
-        setMessage(`已选 ${focusedNode}。调节三角盘并确认。`);
-      }
+        redraw(focusedNode, picker.getBelief());
 
-      redraw(focusedNode, picker.getBelief());
+        const onsetMs = Math.round(performance.now());
+        await waitClick(btn);
+        const offsetMs = Math.round(performance.now());
+        const [r, g, b] = picker.getBelief();
 
-      const onsetMs = Math.round(performance.now());
-      await waitClick(btn);
-      const offsetMs = Math.round(performance.now());
-      const [r, g, b] = picker.getBelief();
-
-      if (trial.orderMode === "sequential") {
         if (focusedNode !== queue[0]) {
           setMessage(`顺序错误，当前应为：${queue[0]}`);
           continue;
         }
-      } else if (!focusedNode || !remaining.has(focusedNode)) {
-        setMessage("请选择未着色节点。");
-        continue;
-      }
 
-      beliefs[focusedNode] = [r, g, b];
-      rows.push({
-        ...meta,
-        step_index: rows.length + 1,
-        chosen_node: focusedNode,
-        belief_red: r,
-        belief_green: g,
-        belief_blue: b,
-        onset_ms: onsetMs,
-        offset_ms: offsetMs,
-        RT_ms: offsetMs - onsetMs,
-      });
-      remaining.delete(focusedNode);
-      if (trial.orderMode === "sequential") {
+        beliefs[focusedNode] = [r, g, b];
+        rows.push({
+          ...meta,
+          step_index: rows.length + 1,
+          chosen_node: focusedNode,
+          belief_red: r,
+          belief_green: g,
+          belief_blue: b,
+          onset_ms: onsetMs,
+          offset_ms: offsetMs,
+          RT_ms: offsetMs - onsetMs,
+        });
+        remaining.delete(focusedNode);
         queue.shift();
+        focusedNode = null;
+      } else {
+        focusedNode = null;
+        picker.setBelief(1 / 3, 1 / 3, 1 / 3);
+        setMessage(
+          "请点击未着色节点，调节三角盘后点确认。可直接点击另一未着色节点切换；未确认的节点保持为空。"
+        );
+        redraw(null, null);
+        let selectionTime = Math.round(performance.now());
+
+        for (;;) {
+          const ev = await waitPickOrConfirm(graphCanvas, btn, layout, remaining);
+          if (ev.type === "pick") {
+            focusedNode = ev.node;
+            picker.setBelief(1 / 3, 1 / 3, 1 / 3);
+            selectionTime = Math.round(performance.now());
+            setMessage(
+              `已选 ${focusedNode}。调节三角盘后点确认；或点击其他未着色节点切换（切换后前一节点仍为空）。`
+            );
+            redraw(focusedNode, picker.getBelief());
+            continue;
+          }
+
+          const [r, g, b] = picker.getBelief();
+          if (!focusedNode || !remaining.has(focusedNode)) {
+            setMessage("请先点击一个未着色节点，再点确认。");
+            continue;
+          }
+
+          const onsetMs = selectionTime;
+          const offsetMs = Math.round(performance.now());
+
+          beliefs[focusedNode] = [r, g, b];
+          rows.push({
+            ...meta,
+            step_index: rows.length + 1,
+            chosen_node: focusedNode,
+            belief_red: r,
+            belief_green: g,
+            belief_blue: b,
+            onset_ms: onsetMs,
+            offset_ms: offsetMs,
+            RT_ms: offsetMs - onsetMs,
+          });
+          remaining.delete(focusedNode);
+          focusedNode = null;
+          break;
+        }
       }
-      focusedNode = null;
     }
   } finally {
     mount.innerHTML = "";
@@ -326,7 +370,7 @@ export async function startExperimentFromUi() {
     {
       type: htmlKeyboardResponse,
       stimulus:
-        "<p>图着色信念任务：请按空格继续。</p><p>自定顺序图：按给定顺序逐点报告；自由顺序图：每次先点击节点再调盘确认。</p>",
+        "<p>图着色信念任务：请按空格继续。</p><p>自定顺序图：按给定顺序逐点报告。自由顺序图：点击节点调节三角盘后点确认；可在确认前点击另一节点切换，未确认的节点保持为空。</p>",
       choices: [" "],
     },
     {
