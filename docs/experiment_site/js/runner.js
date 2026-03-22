@@ -129,7 +129,12 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
 
   const rows = [];
   let focusedNode = null;
-  /** 自由顺序：已报告节点上显示 1、2、3…（填色顺序，非真实 id） */
+  /** 固定顺序：节点上仅显示报告顺序 1、2、3…（来自 reportOrder，与节点 id 无关） */
+  const seqStepByNodeId = new Map();
+  (trial.reportOrder || []).forEach((nid, i) => {
+    seqStepByNodeId.set(nid, i + 1);
+  });
+  /** 自由顺序：已报告节点上显示 1、2、3…（当场填色顺序，非节点 id） */
   const freeFillOrder = {};
   let freeFillCounter = 0;
 
@@ -148,12 +153,14 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
       const isFoc = n.id === focused;
       drawNode(ctx, pos, b, isSel, isFoc);
       if (trial.orderMode === "sequential") {
-        const label = n.label != null ? String(n.label) : n.id;
-        ctx.font = "14px sans-serif";
-        ctx.fillStyle = rgb(THEME.black);
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(label, pos[0], pos[1]);
+        const step = seqStepByNodeId.get(n.id);
+        if (step != null) {
+          ctx.font = "bold 16px sans-serif";
+          ctx.fillStyle = rgb(THEME.black);
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(String(step), pos[0], pos[1]);
+        }
       } else if (trial.orderMode === "free") {
         const ord = freeFillOrder[n.id];
         if (ord != null) {
@@ -204,7 +211,10 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
       if (trial.orderMode === "sequential") {
         focusedNode = queue[0];
         picker.setBelief(1 / 3, 1 / 3, 1 / 3);
-        setMessage(`按顺序报告节点：${focusedNode}。调节三角盘并点击确认。`);
+        const stepNow = seqStepByNodeId.get(focusedNode) ?? queue.length;
+        setMessage(
+          `请按顺序报告标号为 ${stepNow} 的节点。调节三角盘并点击确认。（图上数字为报告顺序，非节点名称）`
+        );
         redraw(focusedNode, picker.getBelief());
 
         const onsetMs = Math.round(performance.now());
@@ -213,7 +223,9 @@ async function runSingleTrial(stimulusDoc, trial, meta) {
         const [r, g, b] = picker.getBelief();
 
         if (focusedNode !== queue[0]) {
-          setMessage(`顺序错误，当前应为：${queue[0]}`);
+          const should = queue[0];
+          const stepShould = seqStepByNodeId.get(should) ?? "?";
+          setMessage(`顺序错误，当前应报告标号为 ${stepShould} 的节点。`);
           continue;
         }
 
@@ -386,7 +398,7 @@ export async function startExperimentFromUi() {
     {
       type: htmlKeyboardResponse,
       stimulus:
-        "<p>图着色信念任务：请按空格继续。</p><p>自定顺序图：按顺序逐点报告，图上为 A、B…。自由顺序图：点节点后调三角盘再确认；已报告节点上会显示 1、2、3… 表示填色顺序（非节点 id）；文字提示不出现节点编号。</p>",
+        "<p>图着色信念任务：请按空格继续。</p><p>自定顺序图：按图上数字 1、2、3… 的顺序逐点报告（数字表示报告顺序，与节点后台 id 无关）。自由顺序图：点节点后调三角盘再确认；已报告节点显示当场填色顺序 1、2、3…；文字提示不暴露节点 id。</p>",
       choices: [" "],
     },
     {
