@@ -69,6 +69,104 @@
     }
   }
 
+  /** 节点 id 顺序与矩阵行列一致 */
+  function edgesToMatrixLines(nodeIds, edges) {
+    const n = nodeIds.length;
+    const adj = Array.from({ length: n }, () => Array(n).fill(0));
+    for (const [u, v] of edges || []) {
+      const i = nodeIds.indexOf(u);
+      const j = nodeIds.indexOf(v);
+      if (i >= 0 && j >= 0 && i !== j) {
+        adj[i][j] = 1;
+        adj[j][i] = 1;
+      }
+    }
+    return adj.map((row) => row.join(" ")).join("\n");
+  }
+
+  function parseAdjacencyMatrix(text, nodeIds) {
+    const n = nodeIds.length;
+    if (n === 0) throw new Error("请先添加节点");
+    const lines = [];
+    for (const line of text.split(/\n/)) {
+      const cut = line.split("#")[0].trim();
+      if (cut.length) lines.push(cut);
+    }
+    if (lines.length === 0) throw new Error("矩阵为空");
+    if (lines.length !== n) throw new Error(`矩阵应为 ${n} 行（与节点数相同），当前为 ${lines.length} 行`);
+    const rows = lines.map((line) =>
+      line.split(/[\s,]+/).filter((x) => x !== "").map((x) => parseInt(x, 10))
+    );
+    const edges = [];
+    for (let i = 0; i < n; i++) {
+      if (rows[i].length !== n) throw new Error(`第 ${i + 1} 行应有 ${n} 个数`);
+      for (let j = 0; j < n; j++) {
+        const v = rows[i][j];
+        if (v !== 0 && v !== 1) throw new Error(`第 ${i + 1} 行第 ${j + 1} 列须为 0 或 1`);
+      }
+      if (rows[i][i] !== 0) throw new Error("对角线须全为 0");
+    }
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (rows[i][j] !== rows[j][i]) throw new Error("矩阵须对称（无向图）");
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        if (rows[i][j] === 1) edges.push([nodeIds[i], nodeIds[j]]);
+      }
+    }
+    return edges;
+  }
+
+  function updateNodeOrderHint() {
+    const el = document.getElementById("editor-node-order-hint");
+    if (!el) return;
+    const trial = getCurrentTrial();
+    const ids = trial.nodes.map((n) => n.id);
+    el.textContent = ids.length
+      ? `矩阵行列顺序：${ids.join(" → ")}`
+      : "（请先添加节点再填矩阵）";
+  }
+
+  function syncBeliefNodeSelect() {
+    const trial = getCurrentTrial();
+    const sel = document.getElementById("editor-belief-node");
+    if (!sel) return;
+    const prev = sel.value;
+    const ids = trial.nodes.map((n) => n.id);
+    sel.innerHTML = '<option value="">— 请选择 —</option>';
+    for (const id of ids) {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = id;
+      sel.appendChild(opt);
+    }
+    sel.value = ids.includes(prev) ? prev : ids[0] || "";
+  }
+
+  function loadPickerFromBeliefSelect() {
+    if (!global._editorPicker) return;
+    const trial = getCurrentTrial();
+    const sel = document.getElementById("editor-belief-node");
+    const id = sel && sel.value;
+    if (id && trial.initialBeliefs && trial.initialBeliefs[id]) {
+      const [r, g, b] = trial.initialBeliefs[id];
+      global._editorPicker.setBelief(r, g, b);
+    } else {
+      global._editorPicker.setBelief(1 / 3, 1 / 3, 1 / 3);
+    }
+    drawEditorPicker();
+  }
+
+  function syncAdjMatrixTextareaFromEdges() {
+    const ta = document.getElementById("editor-adj-matrix");
+    if (!ta) return;
+    const trial = getCurrentTrial();
+    const ids = trial.nodes.map((n) => n.id);
+    ta.value = edgesToMatrixLines(ids, trial.edges);
+  }
+
   function renderTree() {
     const el = document.getElementById("block-trial-tree");
     if (!el) return;
@@ -119,6 +217,10 @@
       c.height = stimulus.canvasHeight;
     }
     syncReportOrderFromUncolored(trial);
+    syncBeliefNodeSelect();
+    loadPickerFromBeliefSelect();
+    syncAdjMatrixTextareaFromEdges();
+    updateNodeOrderHint();
     renderColoredPanel();
     renderReportOrder();
     updateOrderUiVisibility();
@@ -138,21 +240,45 @@
     const panel = document.getElementById("colored-nodes-panel");
     panel.innerHTML = "";
     const beliefs = trial.initialBeliefs || {};
-    for (const nodeId of Object.keys(beliefs)) {
+    const ids = Object.keys(beliefs);
+    if (ids.length === 0) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "（尚无着色节点）";
+      panel.appendChild(p);
+      return;
+    }
+    for (const nodeId of ids) {
       const row = document.createElement("div");
       row.className = "colored-row";
       const [r, g, b] = beliefs[nodeId];
-      row.innerHTML = `<span>${nodeId}: R=${r.toFixed(3)} G=${g.toFixed(3)} B=${b.toFixed(3)}</span>`;
+      const info = document.createElement("span");
+      info.textContent = `${nodeId}: R=${r.toFixed(3)} G=${g.toFixed(3)} B=${b.toFixed(3)}`;
+      const loadBtn = document.createElement("button");
+      loadBtn.type = "button";
+      loadBtn.className = "colored-btn-load";
+      loadBtn.textContent = "载入";
+      loadBtn.title = "载入到上方下拉框与三角盘，可继续修改";
+      loadBtn.addEventListener("click", () => {
+        const sel = document.getElementById("editor-belief-node");
+        if (sel) sel.value = nodeId;
+        loadPickerFromBeliefSelect();
+      });
       const rm = document.createElement("button");
       rm.type = "button";
+      rm.className = "colored-btn-remove";
       rm.textContent = "移除";
       rm.addEventListener("click", () => {
         delete trial.initialBeliefs[nodeId];
         syncReportOrderFromUncolored(trial);
+        syncBeliefNodeSelect();
+        loadPickerFromBeliefSelect();
         renderColoredPanel();
         renderReportOrder();
         drawEditorCanvas();
       });
+      row.appendChild(info);
+      row.appendChild(loadBtn);
       row.appendChild(rm);
       panel.appendChild(row);
     }
@@ -236,6 +362,10 @@
     const id = `n${nextNodeId++}`;
     trial.nodes.push({ id, x, y, label: id });
     syncReportOrderFromUncolored(trial);
+    syncBeliefNodeSelect();
+    loadPickerFromBeliefSelect();
+    syncAdjMatrixTextareaFromEdges();
+    updateNodeOrderHint();
     renderReportOrder();
     drawEditorCanvas();
   }
@@ -247,6 +377,7 @@
       ([a, b]) => (a === u && b === v) || (a === v && b === u)
     );
     if (!has) trial.edges.push([u, v]);
+    syncAdjMatrixTextareaFromEdges();
     drawEditorCanvas();
   }
 
@@ -344,6 +475,7 @@
 
     document.getElementById("btn-clear-edges").addEventListener("click", () => {
       getCurrentTrial().edges = [];
+      syncAdjMatrixTextareaFromEdges();
       drawEditorCanvas();
     });
 
@@ -404,21 +536,62 @@
       renderTree();
     });
 
-    document.getElementById("btn-add-colored").addEventListener("click", () => {
-      const id = window.prompt("节点 ID（须已存在）");
-      if (!id || !id.trim()) return;
-      const trial = getCurrentTrial();
-      const node = trial.nodes.find((n) => n.id === id.trim());
-      if (!node) {
-        alert("找不到该节点");
+    document.getElementById("btn-duplicate-trial").addEventListener("click", () => {
+      ensureIds();
+      const block = stimulus.blocks[currentBlockIdx];
+      const src = getCurrentTrial();
+      const copy = JSON.parse(JSON.stringify(src));
+      const n = block.trials.length + 1;
+      copy.trialId = `t${n}`;
+      const base = src.graphId && String(src.graphId).trim() ? String(src.graphId).trim() : "g";
+      copy.graphId = `${base}_copy`;
+      block.trials.push(copy);
+      currentTrialIdx = block.trials.length - 1;
+      loadTrialToForm();
+      renderTree();
+    });
+
+    document.getElementById("editor-belief-node").addEventListener("change", () => {
+      loadPickerFromBeliefSelect();
+    });
+
+    document.getElementById("btn-apply-belief").addEventListener("click", () => {
+      const sel = document.getElementById("editor-belief-node");
+      const id = sel && sel.value;
+      if (!id) {
+        alert("请先在「选择节点」下拉框中选一个节点");
         return;
       }
+      const trial = getCurrentTrial();
+      if (!trial.nodes.some((n) => n.id === id)) {
+        alert("该节点已不存在，请重新选择");
+        syncBeliefNodeSelect();
+        return;
+      }
+      if (!trial.initialBeliefs) trial.initialBeliefs = {};
       const [r, g, b] = global._editorPicker.getBelief();
-      trial.initialBeliefs[id.trim()] = [r, g, b];
+      trial.initialBeliefs[id] = [r, g, b];
       syncReportOrderFromUncolored(trial);
       renderColoredPanel();
       renderReportOrder();
       drawEditorCanvas();
+    });
+
+    document.getElementById("btn-apply-adj-matrix").addEventListener("click", () => {
+      try {
+        const trial = getCurrentTrial();
+        const nodeIds = trial.nodes.map((n) => n.id);
+        const text = document.getElementById("editor-adj-matrix").value;
+        trial.edges = parseAdjacencyMatrix(text, nodeIds);
+        drawEditorCanvas();
+        syncAdjMatrixTextareaFromEdges();
+      } catch (err) {
+        alert(String(err.message || err));
+      }
+    });
+
+    document.getElementById("btn-fill-matrix-from-edges").addEventListener("click", () => {
+      syncAdjMatrixTextareaFromEdges();
     });
 
     document.getElementById("btn-export").addEventListener("click", () => {

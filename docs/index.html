@@ -45,9 +45,10 @@
         <label>画布高 <input type="number" id="editor-canvas-h" min="300" max="1400" value="620" /></label>
         <button type="button" id="btn-add-block">添加 Block</button>
         <button type="button" id="btn-add-trial">向当前 Block 添加 Trial</button>
+        <button type="button" id="btn-duplicate-trial">复制当前 Trial</button>
         <span class="sep"></span>
         <button type="button" id="btn-add-node">添加节点</button>
-        <button type="button" id="btn-edge-mode">连边：点两个节点</button>
+        <button type="button" id="btn-edge-mode">连边：依次点两节点</button>
         <button type="button" id="btn-clear-edges">清除所有边</button>
         <span class="sep"></span>
         <button type="button" id="btn-import">导入 JSON</button>
@@ -66,20 +67,37 @@
               <option value="free">自由顺序 free</option>
             </select>
           </label>
-          <p class="hint">已着色节点在「着色」列表中设定；被试仅报告未着色节点。</p>
-          <h3>着色节点（初始信念）</h3>
+          <p class="hint">已着色节点由下方选择节点 + 三角盘设定；被试仅报告未着色节点。</p>
+          <h3>初始信念</h3>
+          <label class="editor-belief-select-label">选择节点
+            <select id="editor-belief-node">
+              <option value="">— 请选择 —</option>
+            </select>
+          </label>
+          <p class="hint editor-belief-hint">先选节点，再调右侧三角盘，最后点「应用信念」。可点列表中「载入」重新编辑该节点。</p>
+          <div class="editor-belief-actions">
+            <button type="button" id="btn-apply-belief" class="btn-primary-soft">应用信念到选中节点</button>
+          </div>
+          <h3>已有着色节点</h3>
           <div id="colored-nodes-panel"></div>
-          <button type="button" id="btn-add-colored">添加着色节点</button>
+          <h3>邻接矩阵（0 / 1）</h3>
+          <p class="hint">行、列顺序与当前节点列表一致（见下方顺序）。对称 0/1 矩阵，对角线为 0。可用空格或逗号分隔。</p>
+          <textarea id="editor-adj-matrix" class="editor-adj-matrix" rows="6" placeholder="例如 3 个节点时：&#10;0 1 0&#10;1 0 1&#10;0 1 0"></textarea>
+          <p id="editor-node-order-hint" class="hint editor-node-order"></p>
+          <div class="editor-matrix-actions">
+            <button type="button" id="btn-apply-adj-matrix">从矩阵应用边</button>
+            <button type="button" id="btn-fill-matrix-from-edges">用当前边填入矩阵</button>
+          </div>
           <h3 id="report-order-heading">报告顺序（仅未着色，可拖拽排序）</h3>
           <ul id="report-order-list" class="sortable-list"></ul>
           <p id="report-order-free-hint" class="hint hidden">自由顺序模式下被试自选下一个未着色节点。</p>
         </aside>
         <div class="editor-canvas-wrap">
           <canvas id="editor-canvas" width="960" height="620"></canvas>
-          <div class="editor-canvas-hint">拖拽节点调整位置；连边模式：依次点击两个节点。</div>
+          <div class="editor-canvas-hint">拖拽节点调整位置；「连边」模式：依次点击两个节点连边；也可在左侧用邻接矩阵批量设置。</div>
         </div>
         <aside class="editor-picker-panel">
-          <h3>为「添加着色节点」选色（三角盘）</h3>
+          <h3>三角盘（对左侧选中节点调信念）</h3>
           <canvas id="editor-picker-canvas" width="280" height="280"></canvas>
           <div class="rgb-readout" id="editor-rgb-readout"></div>
         </aside>

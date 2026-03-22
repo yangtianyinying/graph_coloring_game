@@ -498,8 +498,8 @@ button[type="button"] {
 
 .colored-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.35rem;
   align-items: center;
   margin-bottom: 0.55rem;
   font-size: 0.82rem;
@@ -513,27 +513,120 @@ button[type="button"] {
   background: var(--surface);
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.colored-row button:hover {
+.colored-row button.colored-btn-load:hover {
+  border-color: rgba(13, 124, 138, 0.45);
+  color: var(--accent-hover);
+}
+
+.colored-row button.colored-btn-remove:hover {
   border-color: rgba(180, 60, 60, 0.45);
   color: #a32;
 }
 
-#btn-add-colored {
-  width: 100%;
-  margin-top: 0.35rem;
-  padding: 0.5rem;
-  font-weight: 600;
-  border-radius: var(--radius-xs);
-  border: 1px dashed rgba(13, 124, 138, 0.45);
-  background: var(--accent-soft);
-  color: var(--accent-hover);
+.editor-belief-select-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-#btn-add-colored:hover {
+.editor-belief-select-label select {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  background: var(--surface-muted);
+  font-family: inherit;
+  font-size: 0.88rem;
+}
+
+.editor-belief-hint {
+  margin-top: 0.35rem;
+}
+
+.editor-belief-actions {
+  margin: 0.65rem 0 1rem;
+}
+
+.btn-primary-soft {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.88rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(13, 124, 138, 0.45);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-primary-soft:hover {
   border-style: solid;
-  background: rgba(13, 124, 138, 0.18);
+  background: rgba(13, 124, 138, 0.2);
+}
+
+.btn-primary-soft:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.editor-adj-matrix {
+  width: 100%;
+  margin: 0.35rem 0;
+  padding: 0.65rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text);
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.editor-adj-matrix:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+  background: var(--surface);
+}
+
+.editor-node-order {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
+.editor-matrix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.editor-matrix-actions button {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.editor-matrix-actions button:hover {
+  border-color: rgba(13, 124, 138, 0.4);
+  background: var(--surface-muted);
 }
 
 /* —— 实验区 —— */
