@@ -14,6 +14,8 @@ const {
   layoutFromNodes,
   findNodeAt,
 } = window.GraphCanvasDraw;
+const DEFAULT_STIMULUS_URL = "experiment_site/js/StimulateConfig.json";
+let defaultStimulus = null;
 
 function validateTrial(trial) {
   const ids = new Set(trial.nodes.map((n) => n.id));
@@ -398,6 +400,21 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(a.href);
 }
 
+async function loadDefaultStimulus() {
+  const st = document.getElementById("run-stimulus-status");
+  try {
+    const resp = await fetch(DEFAULT_STIMULUS_URL, { cache: "no-store" });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (!data || data.version !== 1) throw new Error("默认刺激集不是 version: 1");
+    defaultStimulus = data;
+    if (st) st.textContent = "默认刺激集已加载（StimulateConfig.json）；可直接开始，或手动选择文件覆盖。";
+  } catch (e) {
+    defaultStimulus = null;
+    if (st) st.textContent = `默认刺激集加载失败：${String(e.message || e)}；请手动选择刺激集 JSON。`;
+  }
+}
+
 export async function startExperimentFromUi() {
   const pid = (document.getElementById("run-participant").value || "").trim();
   if (!pid) {
@@ -407,20 +424,23 @@ export async function startExperimentFromUi() {
   }
   const fileInput = document.getElementById("run-stimulus-file");
   const file = fileInput.files && fileInput.files[0];
-  if (!file) {
-    alert("请先选择刺激集 JSON 文件");
-    return;
-  }
-  const text = await file.text();
-  let stimulus;
-  try {
-    stimulus = JSON.parse(text);
-  } catch (e) {
-    alert("JSON 解析失败: " + e);
-    return;
-  }
-  if (!stimulus || stimulus.version !== 1) {
-    alert("需要 version: 1 的刺激集");
+  let stimulus = null;
+  if (file) {
+    const text = await file.text();
+    try {
+      stimulus = JSON.parse(text);
+    } catch (e) {
+      alert("JSON 解析失败: " + e);
+      return;
+    }
+    if (!stimulus || stimulus.version !== 1) {
+      alert("需要 version: 1 的刺激集");
+      return;
+    }
+  } else if (defaultStimulus) {
+    stimulus = defaultStimulus;
+  } else {
+    alert("默认刺激集未就绪，请先选择刺激集 JSON 文件。");
     return;
   }
 
@@ -495,6 +515,9 @@ document.getElementById("btn-start-exp").addEventListener("click", () => {
 document.getElementById("run-stimulus-file").addEventListener("change", (e) => {
   const f = e.target.files && e.target.files[0];
   const st = document.getElementById("run-stimulus-status");
-  if (f) st.textContent = `已选择: ${f.name}`;
+  if (f) st.textContent = `已选择: ${f.name}（将覆盖默认刺激集）`;
+  else if (defaultStimulus) st.textContent = "已恢复使用默认刺激集（StimulateConfig.json）";
   else st.textContent = "请先选择刺激集 JSON 文件";
 });
+
+loadDefaultStimulus();

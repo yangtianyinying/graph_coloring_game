@@ -68,11 +68,10 @@
     applyNodeVisualScale(e.target.value);
   });
 
-  const tabEditor = document.getElementById("tab-editor");
   const tabRun = document.getElementById("tab-run");
-  if (window.location.hash === "#run" && tabRun) {
-    showPanel("panel-run");
-  } else if (tabEditor) {
+  if (window.location.hash === "#editor") {
     showPanel("panel-editor");
+  } else if (tabRun) {
+    showPanel("panel-run");
   }
 })();
