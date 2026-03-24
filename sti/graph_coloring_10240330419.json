@@ -1,0 +1,193 @@
+{
+  "participant": "10240330419",
+  "stimulus": {
+    "version": 1,
+    "name": "stimulus-set",
+    "canvasWidth": 960,
+    "canvasHeight": 620,
+    "blocks": [
+      {
+        "blockId": "b1",
+        "trials": [
+          {
+            "trialId": "t10",
+            "graphId": "g10_b1",
+            "orderMode": "free",
+            "nodes": [
+              {
+                "id": "A",
+                "x": 356.79998779296875,
+                "y": 386.6875,
+                "label": "A"
+              },
+              {
+                "id": "B",
+                "x": 466.79998779296875,
+                "y": 106.6875,
+                "label": "B"
+              },
+              {
+                "id": "C",
+                "x": 586.7999877929688,
+                "y": 383.6875,
+                "label": "C"
+              },
+              {
+                "id": "D",
+                "x": 470.79998779296875,
+                "y": 512.6875,
+                "label": "D"
+              },
+              {
+                "id": "E",
+                "x": 469.79998779296875,
+                "y": 262.6875,
+                "label": "E"
+              }
+            ],
+            "edges": [
+              [
+                "B",
+                "E"
+              ],
+              [
+                "E",
+                "A"
+              ],
+              [
+                "E",
+                "C"
+              ],
+              [
+                "C",
+                "D"
+              ],
+              [
+                "D",
+                "A"
+              ],
+              [
+                "A",
+                "C"
+              ]
+            ],
+            "initialBeliefs": {},
+            "reportOrder": [],
+            "beliefApplyOrder": []
+          }
+        ]
+      }
+    ],
+    "nodeVisualScale": 0.9
+  },
+  "rows": [
+    {
+      "participant": "10240330419",
+      "stimulus_name": "stimulus-set",
+      "block_index": 1,
+      "block_id": "b1",
+      "trial_in_block": 1,
+      "trial_global": 1,
+      "graph_id": "g10_b1",
+      "order_mode": "free",
+      "step_index": 1,
+      "chosen_node": "E",
+      "belief_red": 0.4878451833365956,
+      "belief_green": 0.1642596174300442,
+      "belief_blue": 0.34789519923336026,
+      "onset_ms": 163078,
+      "offset_ms": 164941,
+      "RT_ms": 1863
+    },
+    {
+      "participant": "10240330419",
+      "stimulus_name": "stimulus-set",
+      "block_index": 1,
+      "block_id": "b1",
+      "trial_in_block": 1,
+      "trial_global": 1,
+      "graph_id": "g10_b1",
+      "order_mode": "free",
+      "step_index": 2,
+      "chosen_node": "C",
+      "belief_red": 0.6504123306365673,
+      "belief_green": 0.125824346200832,
+      "belief_blue": 0.2237633231626007,
+      "onset_ms": 165733,
+      "offset_ms": 167414,
+      "RT_ms": 1681
+    },
+    {
+      "participant": "10240330419",
+      "stimulus_name": "stimulus-set",
+      "block_index": 1,
+      "block_id": "b1",
+      "trial_in_block": 1,
+      "trial_global": 1,
+      "graph_id": "g10_b1",
+      "order_mode": "free",
+      "step_index": 3,
+      "chosen_node": "A",
+      "belief_red": 0.8907289831669603,
+      "belief_green": 0.09748381083729359,
+      "belief_blue": 0.011787205995746113,
+      "onset_ms": 168262,
+      "offset_ms": 170264,
+      "RT_ms": 2002
+    },
+    {
+      "participant": "10240330419",
+      "stimulus_name": "stimulus-set",
+      "block_index": 1,
+      "block_id": "b1",
+      "trial_in_block": 1,
+      "trial_global": 1,
+      "graph_id": "g10_b1",
+      "order_mode": "free",
+      "step_index": 4,
+      "chosen_node": "D",
+      "belief_red": 0.2758010781627195,
+      "belief_green": 0.551856228782067,
+      "belief_blue": 0.17234269305521366,
+      "onset_ms": 170750,
+      "offset_ms": 173182,
+      "RT_ms": 2432
+    },
+    {
+      "participant": "10240330419",
+      "stimulus_name": "stimulus-set",
+      "block_index": 1,
+      "block_id": "b1",
+      "trial_in_block": 1,
+      "trial_global": 1,
+      "graph_id": "g10_b1",
+      "order_mode": "free",
+      "step_index": 5,
+      "chosen_node": "B",
+      "belief_red": 0.1697790255757813,
+      "belief_green": 0.7028062320373045,
+      "belief_blue": 0.12741474238691414,
+      "onset_ms": 177431,
+      "offset_ms": 179702,
+      "RT_ms": 2271
+    },
+    {
+      "participant": "10240330419",
+      "stimulus_name": "stimulus-set",
+      "block_index": 1,
+      "block_id": "b1",
+      "trial_in_block": 1,
+      "trial_global": 1,
+      "graph_id": "g10_b1",
+      "order_mode": "free",
+      "step_index": 6,
+      "chosen_node": "E",
+      "belief_red": 0.5302540043713709,
+      "belief_green": 0.0512374160109985,
+      "belief_blue": 0.4185085796176306,
+      "onset_ms": 180528,
+      "offset_ms": 182198,
+      "RT_ms": 1670
+    }
+  ]
+}

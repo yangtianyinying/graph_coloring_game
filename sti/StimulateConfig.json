@@ -70,7 +70,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t17",
@@ -143,7 +144,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t6",
@@ -204,7 +206,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t4",
@@ -265,7 +268,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t3",
@@ -322,7 +326,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t12",
@@ -387,7 +392,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t9",
@@ -452,7 +458,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t7",
@@ -513,7 +520,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t2",
@@ -570,7 +578,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t13",
@@ -635,7 +644,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t11",
@@ -700,7 +710,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t1",
@@ -757,7 +768,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t15",
@@ -826,7 +838,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t16",
@@ -895,7 +908,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t5",
@@ -956,7 +970,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t8",
@@ -1017,7 +1032,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t14",
@@ -1086,7 +1102,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         }
       ]
     },
@@ -1156,7 +1173,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1225,7 +1243,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1286,7 +1305,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1343,7 +1363,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1408,7 +1429,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1469,7 +1491,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1530,7 +1553,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1591,7 +1615,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1656,7 +1681,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1725,7 +1751,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1782,7 +1809,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1855,7 +1883,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1916,7 +1945,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -1981,7 +2011,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2046,7 +2077,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2103,7 +2135,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2172,7 +2205,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         }
       ]
     },
@@ -2234,7 +2268,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2295,7 +2330,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2364,7 +2400,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2425,7 +2462,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2494,7 +2532,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2567,7 +2606,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2628,7 +2668,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2693,7 +2734,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2758,7 +2800,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2815,7 +2858,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2876,7 +2920,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -2945,7 +2990,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -3010,7 +3056,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -3071,7 +3118,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -3136,7 +3184,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -3193,7 +3242,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         },
         {
           "trialId": "t18",
@@ -3258,7 +3308,8 @@
             ]
           ],
           "initialBeliefs": {},
-          "reportOrder": []
+          "reportOrder": [],
+          "beliefApplyOrder": []
         }
       ]
     }
