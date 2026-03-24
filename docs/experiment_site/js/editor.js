@@ -17,6 +17,7 @@
   let edgeMode = false;
   let pendingEdgeNode = null;
   let dragState = null;
+  let importMode = "normal";
 
   /** 当前 Trial 内独立编号：优先使用 A–Z 中尚未占用的字母，超过 26 个则用 N2、N3… 避免与单字母冲突 */
   function allocNextLetterId(trial) {
@@ -147,6 +148,163 @@
       }
     }
     return edges;
+  }
+
+  function edgesFromAdjacencyMatrix(matrix, nodeIds) {
+    if (!Array.isArray(matrix)) return [];
+    const n = nodeIds.length;
+    const out = [];
+    for (let i = 0; i < Math.min(n, matrix.length); i++) {
+      const row = Array.isArray(matrix[i]) ? matrix[i] : [];
+      for (let j = i + 1; j < Math.min(n, row.length); j++) {
+        const v = Number(row[j]);
+        if (v === 1) out.push([nodeIds[i], nodeIds[j]]);
+      }
+    }
+    return out;
+  }
+
+  function normalizeLegacyNode(raw, idx, fallbackId) {
+    const id = String(
+      (raw && (raw.id ?? raw.name ?? raw.nodeId ?? raw.label)) || fallbackId || String.fromCharCode(65 + idx)
+    );
+    const x = Number(raw && (raw.x ?? raw.X ?? raw.cx ?? (Array.isArray(raw.pos) ? raw.pos[0] : undefined)));
+    const y = Number(raw && (raw.y ?? raw.Y ?? raw.cy ?? (Array.isArray(raw.pos) ? raw.pos[1] : undefined)));
+    return {
+      id,
+      x: Number.isFinite(x) ? x : 120 + ((idx * 90) % 600),
+      y: Number.isFinite(y) ? y : 120 + Math.floor((idx * 90) / 600) * 110,
+      label: String((raw && raw.label) || id),
+    };
+  }
+
+  function normalizeLegacyTrial(rawTrial, tIdx, canvasWidth, canvasHeight) {
+    const trialId = String((rawTrial && (rawTrial.trialId ?? rawTrial.id)) || `t${tIdx + 1}`);
+    const graphId = String((rawTrial && (rawTrial.graphId ?? rawTrial.graph_id ?? rawTrial.name ?? rawTrial.id)) || `g${tIdx + 1}`);
+    const orderMode = rawTrial && rawTrial.orderMode === "sequential" ? "sequential" : "free";
+
+    let nodes = [];
+    const rawNodes = rawTrial && (rawTrial.nodes ?? rawTrial.vertices ?? rawTrial.nodeList);
+    if (Array.isArray(rawNodes) && rawNodes.length) {
+      nodes = rawNodes.map((n, i) => normalizeLegacyNode(n, i));
+    } else {
+      const names = rawTrial && (rawTrial.nodeNames ?? rawTrial.node_names ?? rawTrial.labels);
+      const positions = rawTrial && (rawTrial.nodePositions ?? rawTrial.node_positions ?? rawTrial.positions);
+      if (Array.isArray(names) && names.length) {
+        nodes = names.map((name, i) => {
+          const p = Array.isArray(positions) ? positions[i] : null;
+          return normalizeLegacyNode(
+            {
+              id: name,
+              x: p && (p.x ?? p[0]),
+              y: p && (p.y ?? p[1]),
+              label: name,
+            },
+            i,
+            String(name)
+          );
+        });
+      }
+    }
+    if (!nodes.length) {
+      throw new Error(`旧版第 ${tIdx + 1} 个 trial 缺少可识别节点信息`);
+    }
+    nodes.forEach((n) => {
+      n.x = Math.max(0, Math.min(canvasWidth, n.x));
+      n.y = Math.max(0, Math.min(canvasHeight, n.y));
+    });
+
+    const nodeIdSet = new Set(nodes.map((n) => n.id));
+    let edges = [];
+    const rawEdges = rawTrial && (rawTrial.edges ?? rawTrial.links);
+    if (Array.isArray(rawEdges)) {
+      for (const e of rawEdges) {
+        let u;
+        let v;
+        if (Array.isArray(e) && e.length >= 2) {
+          u = String(e[0]);
+          v = String(e[1]);
+        } else if (e && typeof e === "object") {
+          u = String(e.u ?? e.source ?? e.from ?? "");
+          v = String(e.v ?? e.target ?? e.to ?? "");
+        }
+        if (!u || !v || u === v) continue;
+        if (nodeIdSet.has(u) && nodeIdSet.has(v)) edges.push([u, v]);
+      }
+    } else {
+      const matrix = rawTrial && (rawTrial.adjacencyMatrix ?? rawTrial.adjMatrix ?? rawTrial.matrix);
+      edges = edgesFromAdjacencyMatrix(matrix, nodes.map((n) => n.id));
+    }
+
+    const seen = new Set();
+    edges = edges.filter(([u, v]) => {
+      const key = u < v ? `${u}|${v}` : `${v}|${u}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const initialBeliefs = {};
+    const ib = rawTrial && (rawTrial.initialBeliefs ?? rawTrial.initial_beliefs ?? rawTrial.priors);
+    if (ib && typeof ib === "object") {
+      for (const [k, val] of Object.entries(ib)) {
+        if (!nodeIdSet.has(k) || !Array.isArray(val) || val.length < 3) continue;
+        initialBeliefs[k] = [Number(val[0]) || 0, Number(val[1]) || 0, Number(val[2]) || 0];
+      }
+    }
+    const reportOrder = Array.isArray(rawTrial && rawTrial.reportOrder)
+      ? rawTrial.reportOrder.map((x) => String(x)).filter((id) => nodeIdSet.has(id))
+      : [];
+
+    return {
+      trialId,
+      graphId,
+      orderMode,
+      nodes,
+      edges,
+      initialBeliefs,
+      reportOrder,
+      beliefApplyOrder: [],
+    };
+  }
+
+  function convertLegacyStimulusToV1(data) {
+    const canvasWidth = Number(data && (data.canvasWidth ?? data.width ?? data.canvas_width)) || 960;
+    const canvasHeight = Number(data && (data.canvasHeight ?? data.height ?? data.canvas_height)) || 620;
+    const name = String((data && (data.name ?? data.stimulusName ?? data.title)) || "stimulus-set");
+    let blocksSrc = [];
+    if (Array.isArray(data && data.blocks)) {
+      blocksSrc = data.blocks;
+    } else if (Array.isArray(data && data.trials)) {
+      blocksSrc = [{ blockId: "b1", trials: data.trials }];
+    } else if (Array.isArray(data && data.graphs)) {
+      blocksSrc = [{ blockId: "b1", trials: data.graphs }];
+    } else if (Array.isArray(data)) {
+      blocksSrc = [{ blockId: "b1", trials: data }];
+    } else {
+      throw new Error("无法识别旧版刺激结构（未找到 blocks / trials / graphs）");
+    }
+
+    const blocks = blocksSrc.map((blk, bi) => {
+      const trialRaw = (blk && (blk.trials ?? blk.items ?? blk.graphs)) || [];
+      if (!Array.isArray(trialRaw)) throw new Error(`第 ${bi + 1} 个 block 的 trial 列表格式不正确`);
+      const trials = trialRaw.map((tr, ti) => normalizeLegacyTrial(tr, ti, canvasWidth, canvasHeight));
+      return {
+        blockId: String((blk && (blk.blockId ?? blk.id)) || `b${bi + 1}`),
+        trials,
+      };
+    });
+
+    if (!blocks.length || !blocks.some((b) => b.trials.length > 0)) {
+      throw new Error("旧版刺激中未找到可用 trial");
+    }
+    return {
+      version: 1,
+      name,
+      canvasWidth,
+      canvasHeight,
+      blocks: blocks.map((b) => ({ ...b, trials: b.trials.length ? b.trials : [createEmptyTrial()] })),
+    };
   }
 
   function updateNodeOrderHint() {
@@ -1005,6 +1163,11 @@
     });
 
     document.getElementById("btn-import").addEventListener("click", () => {
+      importMode = "normal";
+      document.getElementById("file-import").click();
+    });
+    document.getElementById("btn-import-legacy").addEventListener("click", () => {
+      importMode = "legacy";
       document.getElementById("file-import").click();
     });
     document.getElementById("file-import").addEventListener("change", (e) => {
@@ -1014,16 +1177,31 @@
       reader.onload = () => {
         try {
           const data = JSON.parse(reader.result);
-          validateAndLoadStimulus(data);
-          if (typeof data.nodeVisualScale === "number" && data.nodeVisualScale > 0) {
-            const s = String(data.nodeVisualScale);
+          let loadedStimulus = data;
+          if (importMode === "legacy") {
+            const converted = convertLegacyStimulusToV1(data);
+            validateAndLoadStimulus(converted);
+            loadedStimulus = converted;
+            alert("旧版刺激已转换为新版结构并载入编辑器。");
+          } else {
+            try {
+              validateAndLoadStimulus(data);
+            } catch (_) {
+              const converted = convertLegacyStimulusToV1(data);
+              validateAndLoadStimulus(converted);
+              loadedStimulus = converted;
+              alert("检测到非新版结构，已自动转换为新版后载入。");
+            }
+          }
+          if (typeof loadedStimulus.nodeVisualScale === "number" && loadedStimulus.nodeVisualScale > 0) {
+            const s = String(loadedStimulus.nodeVisualScale);
             const es = document.getElementById("editor-node-scale");
             const rs = document.getElementById("run-node-scale");
             if (es) es.value = s;
             if (rs) rs.value = s;
             localStorage.setItem("graphNodeVisualScale", s);
-            window.GraphExperimentTheme.setNodeVisualScale(data.nodeVisualScale);
-            const pct = Math.round(data.nodeVisualScale * 100);
+            window.GraphExperimentTheme.setNodeVisualScale(loadedStimulus.nodeVisualScale);
+            const pct = Math.round(loadedStimulus.nodeVisualScale * 100);
             const v1 = document.getElementById("editor-node-scale-val");
             const v2 = document.getElementById("run-node-scale-val");
             if (v1) v1.textContent = `${pct}%`;
