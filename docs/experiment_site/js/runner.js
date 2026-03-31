@@ -405,6 +405,15 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(a.href);
 }
 
+function calcAgeMonthsFromBirthdate(yyyyMmDd) {
+  const d = new Date(yyyyMmDd);
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  if (now.getDate() < d.getDate()) months -= 1;
+  return months >= 0 ? months : null;
+}
+
 async function loadDefaultStimulus() {
   const st = document.getElementById("run-stimulus-status");
   let lastErr = null;
@@ -427,6 +436,30 @@ async function loadDefaultStimulus() {
 }
 
 export async function startExperimentFromUi() {
+  const participantName = (document.getElementById("run-name").value || "").trim();
+  if (!participantName) {
+    alert("请先填写姓名，再开始实验。");
+    document.getElementById("run-name").focus();
+    return;
+  }
+  const birthdate = (document.getElementById("run-birthdate").value || "").trim();
+  if (!birthdate) {
+    alert("请先选择出生日期，再开始实验。");
+    document.getElementById("run-birthdate").focus();
+    return;
+  }
+  const ageMonths = calcAgeMonthsFromBirthdate(birthdate);
+  if (ageMonths == null) {
+    alert("出生日期无效，请重新选择。");
+    document.getElementById("run-birthdate").focus();
+    return;
+  }
+  const gender = (document.getElementById("run-gender").value || "").trim();
+  if (!gender) {
+    alert("请先选择性别，再开始实验。");
+    document.getElementById("run-gender").focus();
+    return;
+  }
   const pid = (document.getElementById("run-participant").value || "").trim();
   if (!pid) {
     alert("请先输入被试编号，再开始实验。");
@@ -503,8 +536,24 @@ export async function startExperimentFromUi() {
         async: true,
         func: async function () {
           const rows = await runAllTrials(stimulus, pid);
+          rows.forEach((r) => {
+            r.participant_name = participantName;
+            r.participant_birthdate = birthdate;
+            r.participant_age_months = ageMonths;
+            r.participant_gender = gender;
+          });
           downloadCsv(`graph_coloring_${pid}.csv`, rows);
-          downloadJson(`graph_coloring_${pid}.json`, { participant: pid, stimulus, rows });
+          downloadJson(`graph_coloring_${pid}.json`, {
+            participant: pid,
+            participant_profile: {
+              name: participantName,
+              birthdate,
+              age_months: ageMonths,
+              gender,
+            },
+            stimulus,
+            rows,
+          });
         },
       },
       {

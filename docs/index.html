@@ -125,6 +125,16 @@
 
     <section id="panel-run" class="panel panel-run active">
       <div class="run-toolbar card-toolbar">
+        <label>姓名 <input type="text" id="run-name" placeholder="姓名" /></label>
+        <label>出生日期 <input type="date" id="run-birthdate" /></label>
+        <label>性别
+          <select id="run-gender">
+            <option value="">请选择</option>
+            <option value="male">男</option>
+            <option value="female">女</option>
+            <option value="other">其他</option>
+          </select>
+        </label>
         <label>被试编号 <input type="text" id="run-participant" placeholder="学号" /></label>
         <input type="file" id="run-stimulus-file" accept="application/json,.json" />
         <label class="node-scale-label">节点大小 <input type="range" id="run-node-scale" min="0.45" max="1.35" step="0.05" value="1" /> <span id="run-node-scale-val">100%</span></label>
